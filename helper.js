@@ -1,4 +1,5 @@
 const fs = require('fs/promises');
+const jwt = require("jsonwebtoken");
 
 const PATH_TOP250 = "top250.json"
 
@@ -64,11 +65,16 @@ function getFilmPos(top250, id) {
     return pos;
 }
 
+const generateToken = (embedded) => {
+    return jwt.sign(embedded, process.env.SECRET, { expiresIn: "5m" });
+};
+
 module.exports = {
     modelValidation,
     readTop250,
     writeTop250,
     mapPositions,
     isIdValid,
-    getFilmPos
+    getFilmPos,
+    generateToken
 }

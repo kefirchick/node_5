@@ -1,10 +1,9 @@
 require("dotenv").config();
 const express = require("express");
-const sequelize = require("./db_config");
-const { router } = require("./router");
+const sequelize = require("./db-config");
+const { filmsRouter } = require("./films-router");
+const { authRouter } = require("./auth-router");
 const { readTop250 } = require("./helper.js");
-
-const PORT = 3000;
 
 const app = express();
 
@@ -20,12 +19,14 @@ async function runServer() {
         console.error("Error syncing database:", error);
     }
 
+    app.use("/api/auth", authRouter);
+
     app.use("/api/films/", (req, res, next) => {
         req.top250 = top250;
         next();
     });
 
-    app.use("/api/films", router);
+    app.use("/api/films", filmsRouter);
 
     app.use((req, res, next) => {
         next({ status: 404, message: "Not Found" });
