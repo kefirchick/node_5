@@ -8,31 +8,34 @@ const { update } = require("./routes/update");
 
 const filmsRouter = express.Router();
 
-filmsRouter.use("/", (req, res, next) => {
-    const token = req.headers.authorization?.split(" ")[1];
-    if (!token) {
-        return next({ status: 401, message: "Access token required" });
-    }
+function auth(isAdminOnly) {
+    return (req, res, next) => {
+        const token = req.headers.authorization?.split(" ")[1];
+    
+        if (!token) {
+            return next({ status: 401, message: "Access token required" });
+        }
+    
+        try {
+            const user = jwt.verify(token, process.env.SECRET);
 
-    try {
-        const user = jwt.verify(token, process.env.SECRET);
-
-        if (!user) {
+            if (!user || (isAdminOnly && !user.super)) {
+                return next({ status: 403, message: "Invalid credentials" });
+            }
+    
+            req.user = user;
+        } catch (err) {
             return next({ status: 403, message: "Invalid credentials" });
         }
-
-        req.user = user;
-    } catch (err) {
-        return next({ status: 403, message: "Invalid credentials" });
+    
+        next();
     }
+}
 
-    next();
-});
-
-filmsRouter.get("/readall", readall);
-filmsRouter.get("/read", read);
-filmsRouter.post("/create", create);
-filmsRouter.post("/update", update);
-filmsRouter.post("/delete", filmDelete);
+filmsRouter.get("/readall", auth(false), readall);
+filmsRouter.get("/read", auth(false), read);
+filmsRouter.post("/create", auth(true), create);
+filmsRouter.post("/update", auth(true), update);
+filmsRouter.post("/delete", auth(true), filmDelete);
 
 module.exports = { filmsRouter };
